@@ -12,7 +12,7 @@ class StockPredictor:
         self.ticker = ticker
         self.model = None
     
-    def download_stocks(self, start='2022-10-01', end=datetime.now() + timedelta(days=30), interval=24):
+    def download_stocks(self, start='2000-10-01', end=datetime.now() + timedelta(days=30), interval=24):
         with requests.Session() as session:
             data = apimoex.get_market_candles(session, self.ticker, start=start, end=end, interval=interval)
             df = pd.DataFrame(data)
