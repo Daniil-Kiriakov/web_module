@@ -21,7 +21,7 @@ class StockPredictor:
             df = df[['Open', 'High', 'Low', 'Close', 'Value']]
             return df
 
-    def create_dataset(self, df, window=30, percent=0.7, column='Close'):
+    def create_dataset(self, df, window=30, percent=0.8, column='Close'):
         SIZE = int(len(df) * percent)
         train_df = df[:SIZE]
         test_df = df[SIZE - 1:]
@@ -65,7 +65,7 @@ class StockPredictor:
         stock_dataframe = self.download_stocks()
         x_train, y_train, x_test, y_test, test_time = self.create_dataset(stock_dataframe.iloc[:-14, :])
 
-        model = XGBRegressor(n_estimators=20, max_depth=1)
+        model = XGBRegressor(n_estimators=1000, max_depth=3)
         model.fit(x_train, y_train)
         self.model = model
         
@@ -80,9 +80,8 @@ class StockPredictor:
         for _ in range(prediction_days):
             last_days = last_days[-window:]
             temp_prediction = model.predict([last_days])
-            temp_prediction[0] = np.random.normal(
-                loc=temp_prediction[0], scale=temp_prediction[0] * 0.005, size=1
-                )
+            temp_prediction[0] = np.random.normal(loc=temp_prediction[0], scale=temp_prediction[0] * 0.005, size=1)
+            
             future_pred.append(temp_prediction[0])
             last_days.append(temp_prediction[0])
             
@@ -95,8 +94,8 @@ class StockPredictor:
 
         '''real prices'''
 
-        test_predictions = list(test_predictions[-200:])
-        test_time = test_time[-200:]
+        test_predictions = list(test_predictions[-350:])
+        test_time = test_time[-350:]
         real_prices = list(real_dataframe['Close'].values)
         
         test_df = pd.DataFrame({'time': test_time, 'price': test_predictions})
@@ -111,7 +110,7 @@ class StockPredictor:
         res = {
             # 'Model': model,
             'Ticker': self.ticker,
-            # 'Metrics': [MSE, MAE, RMSE],
+            'Metrics': [MSE, MAE, RMSE],
 
             # 'Time_test_predictions': [datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d') for timestamp in all_df['time'].values],
             'Time_test_predictions': np.arange(len(all_df['time'].values)).tolist(),

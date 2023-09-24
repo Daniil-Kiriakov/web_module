@@ -81,6 +81,9 @@
     <button onclick="predictData()">Press</button>
     <h2>Current ticker:</h2>
     <p id="tickerOutput">No ticker set</p>
+    <p id="MSE">MSE:</p>
+    <p id="MAE">MAE:</p>
+    <p id="RMSE">RMSE:</p>
     <!-- <button id="drawChart" onclick="drawChart()">Draw Chart</button> -->
     <canvas id="myChart" width="400" height="200"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -101,8 +104,7 @@
             })
                 .then(async (response) => {
                     let data = await response.json();
-                    // document.getElementById("tickerOutput").innerHTML = JSON.stringify(data['Real_prices'])
-                    // data['Future_predictions'] = data['Future_predictions'].replace(/\n/g, '');
+                    document.getElementById("tickerOutput").innerHTML = `Ticker: ${currentTickerElement.value}`
 
                     data['Future_predictions'] = JSON.parse(data['Future_predictions'])
                     data['Real_prices'] = JSON.parse(data['Real_prices'])
@@ -113,6 +115,10 @@
                     data['Test_predictions'] = data['Test_predictions'].map(item => (item === -1 ? null : item));
 
                     console.log(data)
+                    data['Metrics'] = JSON.parse(data['Metrics'])
+                    document.getElementById("MSE").innerHTML = `MSE: ${data['Metrics'][0]}`
+                    document.getElementById("MAE").innerHTML = `MAE: ${data['Metrics'][1]}`
+                    document.getElementById("RMSE").innerHTML = `RMSE: ${data['Metrics'][2]}`
 
                     drawChart(data)
                 })
@@ -155,7 +161,7 @@
             ]
             };
 
-            if(myChart){
+            if (myChart){
                 myChart.destroy();
             }
 
