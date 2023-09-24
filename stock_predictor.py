@@ -21,7 +21,7 @@ class StockPredictor:
             df = df[['Open', 'High', 'Low', 'Close', 'Value']]
             return df
 
-    def create_dataset(self, df, window=30, percent=0.8, column='Close'):
+    def create_dataset(self, df, window=30, percent=0.85, column='Close'):
         SIZE = int(len(df) * percent)
         train_df = df[:SIZE]
         test_df = df[SIZE - 1:]
@@ -94,8 +94,8 @@ class StockPredictor:
 
         '''real prices'''
 
-        test_predictions = list(test_predictions[-350:])
-        test_time = test_time[-350:]
+        test_predictions = list(test_predictions[-250:])
+        test_time = test_time[-250:]
         real_prices = list(real_dataframe['Close'].values)
         
         test_df = pd.DataFrame({'time': test_time, 'price': test_predictions})
