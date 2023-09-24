@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoBot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-size: cover;
+            background-color: #343541; /* Задаем черный фон */
+            color: #e0e0e0; /* Задаем белый цвет текста */
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            padding: 20px;
+        }
+        h1 {
+            color: #e0e0e0;
+            font-size: 50px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #e0e0e0;
+            font-size: 25px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+        form {
+            background: #e0e0e0;
+            border: #e0e0e0 1px solid;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: #ccc 1px solid;
+            border-radius: 5px;
+        }
+        button[type="submit"] {
+            background-color: #007BFF;
+            color: #23aa5d;
+            border: none;
+            padding: 15px 30px;
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 18px;
+            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s ease;
+        }
+        button[type="submit"]:hover {
+            background-color: #1df001;
+        }
+        button#drawChart {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 18px;
+            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+        button#drawChart:hover {
+            background-color: #1df001;
+        }
+        .ticker-label {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Module</h1>
+    <label class="ticker-label">Enter ticker:</label>
+    <input id="tickerInput" type="text" name="new_ticker" required value="GAZP">
+    <button onclick="predictData()">Press</button>
+    <h2>Current ticker:</h2>
+    <p id="tickerOutput">No ticker set</p>
+    <!-- <button id="drawChart" onclick="drawChart()">Draw Chart</button> -->
+    <canvas id="myChart" width="400" height="200"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function predictData() {
+            const currentTickerElement = document.getElementById("tickerInput");
+
+            let payload = JSON.stringify({
+                "ticker": currentTickerElement.value
+            });
+
+            fetch("/set_ticker", {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json"
+                },
+                body: payload
+            })
+                .then(async (response) => {
+                    let data = await response.json();
+                    // document.getElementById("tickerOutput").innerHTML = JSON.stringify(data['Real_prices'])
+                    // data['Future_predictions'] = data['Future_predictions'].replace(/\n/g, '');
+
+                    data['Future_predictions'] = JSON.parse(data['Future_predictions'])
+                    data['Real_prices'] = JSON.parse(data['Real_prices'])
+                    data['Test_predictions'] = JSON.parse(data['Test_predictions'])
+
+                    data['Future_predictions'] = data['Future_predictions'].map(item => (item === -1 ? null : item));
+                    data['Real_prices'] = data['Real_prices'].map(item => (item === -1 ? null : item));
+                    data['Test_predictions'] = data['Test_predictions'].map(item => (item === -1 ? null : item));
+
+                    console.log(data['Real_prices'])
+
+                    drawChart(data)
+                })
+                .catch((err) => {
+                    console.log(err);
+                })
+        }
+
+        function drawChart(responseData) {
+            var ctx = document.getElementById('myChart').getContext('2d');
+            
+            var data = {
+                labels: JSON.parse(responseData['Time_test_predictions']),
+                datasets: [{
+                    label: 'Future_predictions',
+                    data: responseData['Future_predictions'],
+                    backgroundColor: 'red',
+                    borderColor: 'red',
+                    borderWidth: 2,
+                    pointStyle: false
+                },
+                {
+                    label: 'Real_prices',
+                    data: responseData['Real_prices'],
+                    backgroundColor: 'green',
+                    borderColor: 'green',
+                    borderWidth: 2,
+                    pointStyle: false
+                },
+                {
+                    label: 'Test_predictions',
+                    data: responseData['Test_predictions'],
+                    backgroundColor: 'blue',
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    pointStyle: false
+                }
+            ]
+            };
+
+            var myChart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
