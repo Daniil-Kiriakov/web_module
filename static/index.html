@@ -112,7 +112,7 @@
                     data['Real_prices'] = data['Real_prices'].map(item => (item === -1 ? null : item));
                     data['Test_predictions'] = data['Test_predictions'].map(item => (item === -1 ? null : item));
 
-                    console.log(data['Real_prices'])
+                    console.log(data)
 
                     drawChart(data)
                 })
@@ -120,6 +120,8 @@
                     console.log(err);
                 })
         }
+
+        var myChart
 
         function drawChart(responseData) {
             var ctx = document.getElementById('myChart').getContext('2d');
@@ -153,7 +155,11 @@
             ]
             };
 
-            var myChart = new Chart(ctx, {
+            if(myChart){
+                myChart.destroy();
+            }
+
+            myChart = new Chart(ctx, {
                 type: 'line',
                 data: data,
                 options: {
