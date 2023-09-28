@@ -6,6 +6,12 @@ import pandas as pd
 import numpy as np
 from xgboost import XGBRegressor
 from sklearn.metrics import mean_absolute_percentage_error, mean_squared_error
+import logging
+
+# logging.basicConfig(level=logging.DEBUG,
+#                     format='%(asctime)s || %(levelname)s || %(message)s')
+
+# logger = logging.getLogger()
 
 class StockPredictor:
     def __init__(self, ticker='GAZP'):
@@ -23,35 +29,27 @@ class StockPredictor:
 
     def create_dataset(self, df, window=30, percent=0.85, column='Close'):
         SIZE = int(len(df) * percent)
-        train_df = df[:SIZE]
-        test_df = df[SIZE - 1:]
+        train_df, test_df = df[:SIZE], df[SIZE - 1:]
 
-        x_train = [] 
-        y_train = []
+        def create_data_samples(data_frame):
+            x, y = [], []
+            for i in range(len(data_frame) - window - 1):
+                temp = data_frame[i: (i + window)][column]
+                x.append(temp)
+                y.append(data_frame.iloc[i + window][column])
+            return x, y
 
-        x_test = [] 
-        y_test = []
-
-        for i in range(len(train_df) - window - 1):
-            temp = train_df[i: (i + window)][column]
-
-            x_train.append(temp)
-            y_train.append(train_df.iloc[i + window][column])
-
-        for i in range(len(test_df) - window - 1):
-            temp = test_df[i: (i + window)][column]
-
-            x_test.append(temp)
-            y_test.append(test_df.iloc[i + window][column])
+        x_train, y_train = create_data_samples(train_df)
+        x_test, y_test = create_data_samples(test_df)
 
         test_time = test_df.index.values[-len(x_test):]
-        test_time= [int(datetime.strptime(date, '%Y-%m-%d %H:%M:%S').timestamp()) for date in test_time]
+        test_time = [int(datetime.strptime(date, '%Y-%m-%d %H:%M:%S').timestamp()) for date in test_time]
 
         return list(x_train), list(y_train), list(x_test), list(y_test), test_time
 
     def get_metrics(self, y_test, predictions):
         MSE = mean_squared_error(y_test, predictions, squared=True)
-        MAE = mean_absolute_percentage_error(y_test, predictions)
+        MAE = mean_absolute_percentage_error(y_test, predictions) * 100
         RMSE = mean_squared_error(y_test, predictions, squared=False)
         return MSE, MAE, RMSE
     
@@ -65,7 +63,7 @@ class StockPredictor:
         stock_dataframe = self.download_stocks()
         x_train, y_train, x_test, y_test, test_time = self.create_dataset(stock_dataframe.iloc[:-14, :])
 
-        model = XGBRegressor(n_estimators=1000, max_depth=3)
+        model = XGBRegressor(n_estimators=500, max_depth=2, )
         model.fit(x_train, y_train)
         self.model = model
         
@@ -94,8 +92,8 @@ class StockPredictor:
 
         '''real prices'''
 
-        test_predictions = list(test_predictions[-250:])
-        test_time = test_time[-250:]
+        test_predictions = list(test_predictions[-150:])
+        test_time = test_time[-150:]
         real_prices = list(real_dataframe['Close'].values)
         
         test_df = pd.DataFrame({'time': test_time, 'price': test_predictions})
@@ -106,7 +104,7 @@ class StockPredictor:
         all_df = test_df.merge(fut_df, on='time', how='outer', suffixes=('_test', '_fut')) \
                         .merge(real_df, on='time', how='outer', suffixes=('', '_real'))
         all_df.fillna(-1, inplace=True)
-        
+                
         res = {
             # 'Model': model,
             'Ticker': self.ticker,

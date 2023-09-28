@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CryptoBot</title>
+    <title>Crypton</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-size: cover;
-            background-color: #343541; /* Задаем черный фон */
-            color: #e0e0e0; /* Задаем белый цвет текста */
+            background-color: #343541;
+            color: #e0e0e0;
             background-repeat: no-repeat;
             background-attachment: fixed;
             padding: 20px;
@@ -77,10 +77,10 @@
 <body>
     <h1>Module</h1>
     <label class="ticker-label">Enter ticker:</label>
-    <input id="tickerInput" type="text" name="new_ticker" required value="GAZP">
+    <input id="tickerInput" type="text" name="new_ticker" required value="SBER">
     <button onclick="predictData()">Press</button>
     <h2>Current ticker:</h2>
-    <p id="tickerOutput">No ticker set</p>
+    <p id="tickerOutput">Ticker:</p>
     <p id="MSE">MSE:</p>
     <p id="MAE">MAE:</p>
     <p id="RMSE">RMSE:</p>
@@ -116,9 +116,9 @@
 
                     console.log(data)
                     data['Metrics'] = JSON.parse(data['Metrics'])
-                    document.getElementById("MSE").innerHTML = `MSE: ${data['Metrics'][0]}`
-                    document.getElementById("MAE").innerHTML = `MAE: ${data['Metrics'][1]}`
-                    document.getElementById("RMSE").innerHTML = `RMSE: ${data['Metrics'][2]}`
+                    document.getElementById("MSE").innerHTML = `MSE: ${parseFloat(data['Metrics'][0]).toFixed(4)}`
+                    document.getElementById("MAE").innerHTML = `MAE: ${parseFloat(data['Metrics'][1]).toFixed(4)} %`
+                    document.getElementById("RMSE").innerHTML = `RMSE: ${parseFloat(data['Metrics'][2]).toFixed(4)}`
 
                     drawChart(data)
                 })
