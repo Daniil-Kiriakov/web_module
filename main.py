@@ -12,6 +12,11 @@ from stock_predictor import StockPredictor
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+@app.get("/", response_class=HTMLResponse)
+async def get_ticker_form():
+    with open("static/index.html", "r") as file:
+        return file.read()
+
 ticker = None
 
 class OutJson(BaseModel):
@@ -44,11 +49,6 @@ def get_predict_by_ticker():
         traceback.print_exc()
         return JSONResponse(content={"Error": "Error in ticker or " + str(e)})
 
-    
-@app.get("/", response_class=HTMLResponse)
-async def get_ticker_form():
-    with open("static/index.html", "r") as file:
-        return file.read()
     
 
 # if __name__ == "__main__":

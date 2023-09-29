@@ -29,7 +29,7 @@
         form {
             background: #e0e0e0;
             border: #e0e0e0 1px solid;
-            padding: 20px;
+            padding: 10px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
         }
@@ -44,7 +44,7 @@
             background-color: #007BFF;
             color: #23aa5d;
             border: none;
-            padding: 15px 30px;
+            padding: 10px 5px;
             cursor: pointer;
             border-radius: 10px;
             font-size: 18px;
@@ -81,8 +81,8 @@
     <button onclick="predictData()">Press</button>
     <h2>Current ticker:</h2>
     <p id="tickerOutput">Ticker:</p>
-    <p id="MSE">MSE:</p>
-    <p id="MAE">MAE:</p>
+    <p id="MSE">MAE:</p>
+    <p id="MAE">MAPE:</p>
     <p id="RMSE">RMSE:</p>
     <!-- <button id="drawChart" onclick="drawChart()">Draw Chart</button> -->
     <canvas id="myChart" width="400" height="200"></canvas>
@@ -116,8 +116,8 @@
 
                     console.log(data)
                     data['Metrics'] = JSON.parse(data['Metrics'])
-                    document.getElementById("MSE").innerHTML = `MSE: ${parseFloat(data['Metrics'][0]).toFixed(4)}`
-                    document.getElementById("MAE").innerHTML = `MAE: ${parseFloat(data['Metrics'][1]).toFixed(4)} %`
+                    document.getElementById("MSE").innerHTML = `MAE: ${parseFloat(data['Metrics'][0]).toFixed(4)}`
+                    document.getElementById("MAE").innerHTML = `MAPE: ${parseFloat(data['Metrics'][1]).toFixed(2)} %`
                     document.getElementById("RMSE").innerHTML = `RMSE: ${parseFloat(data['Metrics'][2]).toFixed(4)}`
 
                     drawChart(data)

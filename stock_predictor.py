@@ -1,17 +1,15 @@
-import time
 import requests
 import apimoex
 from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 from xgboost import XGBRegressor
-from sklearn.metrics import mean_absolute_percentage_error, mean_squared_error
-import logging
+import os
+import joblib
+from sklearn.metrics import (mean_absolute_percentage_error, 
+                             mean_squared_error, 
+                             mean_absolute_error)
 
-# logging.basicConfig(level=logging.DEBUG,
-#                     format='%(asctime)s || %(levelname)s || %(message)s')
-
-# logger = logging.getLogger()
 
 class StockPredictor:
     def __init__(self, ticker='GAZP'):
@@ -46,29 +44,33 @@ class StockPredictor:
         test_time = [int(datetime.strptime(date, '%Y-%m-%d %H:%M:%S').timestamp()) for date in test_time]
 
         return list(x_train), list(y_train), list(x_test), list(y_test), test_time
-
-    def get_metrics(self, y_test, predictions):
-        MSE = mean_squared_error(y_test, predictions, squared=True)
-        MAE = mean_absolute_percentage_error(y_test, predictions) * 100
-        RMSE = mean_squared_error(y_test, predictions, squared=False)
-        return MSE, MAE, RMSE
     
-    def fill_nan(self, list_orig, list_to_transform):
-        diff = len(list_orig) - len(list_to_transform)
-        temp_list = [None] * diff
-        return temp_list + list_to_transform
+    
+    def get_metrics(self, y_test, predictions):
+        MAE = mean_absolute_error(y_test, predictions)
+        MAPE = mean_absolute_percentage_error(y_test, predictions) * 100
+        RMSE = mean_squared_error(y_test, predictions, squared=False)
+        return MAE, MAPE, RMSE
     
         
     def model_fit_predict(self, prediction_days=30, window=30):
         stock_dataframe = self.download_stocks()
         x_train, y_train, x_test, y_test, test_time = self.create_dataset(stock_dataframe.iloc[:-14, :])
 
-        model = XGBRegressor(n_estimators=500, max_depth=2, )
+        # model_filenames = os.listdir('models/')
+        # test_predictions = []
+        # for list_model in model_filenames:
+        #     temp_model = joblib.load('models/{}'.format(list_model))
+        #     test_predictions.append(temp_model.predict(x_test))
+        model = XGBRegressor()
         model.fit(x_train, y_train)
-        self.model = model
-        
         test_predictions = model.predict(x_test)
-        MSE, MAE, RMSE = self.get_metrics(y_test=y_test, predictions=test_predictions)
+        
+        # test_predictions = np.mean( np.reshape(test_predictions, (len(model_filenames), len(x_test))), axis=1)
+        # print(np.reshape(test_predictions, (len(model_filenames), len(x_test)))[:3])
+        # print(test_predictions[:3])
+        
+        MAE, MAPE, RMSE = self.get_metrics(y_test=y_test, predictions=test_predictions)
 
         '''prediction'''
         temp = stock_dataframe.iloc[-100:-15, :].copy()
@@ -77,7 +79,15 @@ class StockPredictor:
 
         for _ in range(prediction_days):
             last_days = last_days[-window:]
+
             temp_prediction = model.predict([last_days])
+
+            # temp_pred = []
+            # for list_model in model_filenames:
+            #     temp_model = joblib.load('models/{}'.format(list_model))
+            #     temp_pred.append(temp_model.predict(x_test))
+                
+            # temp_prediction = np.mean(temp_pred)
             temp_prediction[0] = np.random.normal(loc=temp_prediction[0], scale=temp_prediction[0] * 0.005, size=1)
             
             future_pred.append(temp_prediction[0])
@@ -92,13 +102,10 @@ class StockPredictor:
 
         '''real prices'''
 
-        test_predictions = list(test_predictions[-150:])
-        test_time = test_time[-150:]
-        real_prices = list(real_dataframe['Close'].values)
-        
-        test_df = pd.DataFrame({'time': test_time, 'price': test_predictions})
+  
+        test_df = pd.DataFrame({'time': test_time[-150:], 'price': test_predictions[-150:]})
         fut_df = pd.DataFrame({'time': time_future_predictions, 'price': future_pred})
-        real_df = pd.DataFrame({'time': time_real_prices, 'price': real_prices})
+        real_df = pd.DataFrame({'time': time_real_prices, 'price': real_dataframe['Close'].values})
 
         # time	price_test	price_fut	price
         all_df = test_df.merge(fut_df, on='time', how='outer', suffixes=('_test', '_fut')) \
@@ -108,7 +115,7 @@ class StockPredictor:
         res = {
             # 'Model': model,
             'Ticker': self.ticker,
-            'Metrics': [MSE, MAE, RMSE],
+            'Metrics': [MAE, MAPE, RMSE],
 
             # 'Time_test_predictions': [datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d') for timestamp in all_df['time'].values],
             'Time_test_predictions': np.arange(len(all_df['time'].values)).tolist(),
